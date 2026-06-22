@@ -1,4 +1,8 @@
 import requests
+import pandas as pd
+import sqlalchemy as db
+
+
 
 url = 'https://statsapi.mlb.com/api/v1/schedule'
 
@@ -11,15 +15,13 @@ resp = requests.get(url, params=params)
 
 data = resp.json()
 
-#getting all the games from the data
-games = data["dates"][0]["games"]
 
-#printing out state for the matches
-for game in games:
-    away = game["teams"]["away"]["team"]["name"]
-    home = game["teams"]["home"]["team"]["name"]
-    status = game["status"]["detailedState"]
+games = data['dates'][0]['games']
 
-    print(away, "vs", home)
-    print("Status:", status)
-    print()
+mlbdata = pd.DataFrame.from_dict(games)
+
+engine = db.create_engine('sqlite:///data_base_name.db')
+mlbdata.to_sql('mlb_table', con=engine, if_exists='replace', index=False)
+with engine.connect() as connection:
+   query_result = connection.execute(db.text("SELECT * FROM table_name;")).fetchall()
+   print(pd.DataFrame(query_result))
